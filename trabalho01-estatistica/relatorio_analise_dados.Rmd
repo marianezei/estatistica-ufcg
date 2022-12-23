@@ -1,0 +1,234 @@
+---
+title: "Análise Exploratória De Dados"
+author: |
+  | Johansson de Lucena Santos, 120210508
+  | Mariane Maira Santos Zeitouni, 120210789
+
+date: "19/12/2022"
+output: pdf_document
+---
+
+# Análise Exploratória de Dados
+
+## Qual a causa de acidente aéreo que mais ocorre em território nacional?
+
+Os acidentes aéreos que ocorrem no Brasil são poucos divulgados, a não ser quando se trata de alguma figura pública estar em tal acidente, dessa forma a notícia é amplamente espalhada. Mas segundo dados do dataSUS, os acidentes aéreos em território brasileiro ocorrem em determinada escala que não é divulgada. Esse trabalho tem o intuito de analisar qual a causa de acidente aéreo que mais ocorre no país e também classificar em qual espaço aéreo - referente a qual estado - mais ocorre, no período de 2020 e 2021. Escolheu-se esse período específico por se tratar de uma pandemia em andamento e em 2021 um país que voltou "ao normal" novamente. Algumas análises referente à pandemia versus número de acidentes, também será feita
+
+## Problema:
+
+1.  Analisar qual a causa de acidente que mais ocorre em território nacional.
+
+2.  Classificar os estados que mais ocorre acidentes.
+
+3.  Relacionar o número de acidentes com a pandemia no ano de 2020.
+
+## População:
+
+A população alvo deste estudo engloba os acidentes aéreos no período de 2020 e 2021.
+
+## Objetivos:
+
+1.  Objetivo geral: apresentação dos dados aéreos no território nacional, como tipos de acidentes, locais de ocorrências, número de acidentes, dentre outros.
+
+2.  Objetivo específico: fornecer microdados para dar suporte a um estudo mais aprofundado sobre os acidentes aéreos. Estes microdados irão demonstrar onde os acidentes são mais recorrentes e quais tipos de acidentes mais ocorrem em determinadas regiões.
+
+Importando pacotes necessários:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+library(dplyr)
+library(DataExplorer)
+library(ggplot2)
+library(lsr)
+```
+
+Primeiro é necessário carregar o arquivo que contém a base de dados a ser analisada.
+
+```{r echo=TRUE}
+
+dados_20 <- read.csv("ocorrencia_20.csv")
+dados_21 <- read.csv("ocorrencia_21.csv")
+
+```
+
+Conhecendo nossos dados, a seguir é mostrado as 6 primeiras linhas da nossa base de dados:
+
+```{r echo=FALSE}
+
+head(dados_20)
+head(dados_21)
+```
+
+Temos 24 variáveis em cada arquivo de dados, mas para essa análise iremos focar apenas no tipo de ocorrência e no seu respectivo estado. Dessa forma, iremos selecionar apenas as variáveis na qual estamos interessados.
+
+```{r echo=false, message=FALSE}
+
+dados_filtrados_20 <- dados_20 %>%
+  select(ocorrencia_tipo, ocorrencia_uf)
+
+dados_filtrados_21 <- dados_21 %>%
+  select(ocorrencia_tipo, ocorrencia_uf)
+  
+knitr::kable(head(dados_filtrados_20), caption="Primeiras linhas da base de dados")
+knitr::kable(head(dados_filtrados_21), caption="Primeiras linhas da base de dados")
+
+```
+
+O próximo passo é procurar por valores ausentes (NAs, zeros, etc) com o pacote "DataExplorer".
+
+```{r echo=false, message=FALSE}
+
+# O parâmetro group da função categoriza a variável de acordo com os limites 
+# superiores estipulados (valores padrões da biblioteca). 
+
+plot_missing(dados_filtrados_20, 
+             title="Porcentagem de valores ausentes nas variáveis", 
+             group = list(Bom = 0.05, Ok = 0.4, Ruim = 0.8, Remover = 1))
+
+plot_missing(dados_filtrados_21, 
+             title="Porcentagem de valores ausentes nas variáveis", 
+             group = list(Bom = 0.05, Ok = 0.4, Ruim = 0.8, Remover = 1))
+
+
+```
+
+O gráfico demonstra que não temos valores ausentes nas variáveis, apesar de que possuimos um estado com nome inválido pois acredita-se que o acidente aconteceu em uma divisa entre estados.
+
+Extraindo a moda de acidentes de cada estado:
+
+```{r echo=TRUE, message=FALSE}
+
+  freq.ocorrencia_tipo_20 <- dados_filtrados_20$ocorrencia_tipo
+  freq.ocorrencia_tipo_20
+  
+  freq.ocorrencia_tipo_21 <- dados_filtrados_21$ocorrencia_tipo
+  freq.ocorrencia_tipo_21
+  
+ 
+ 
+
+knitr::kable(freq.ocorrencia_tipo_20, digits=2, caption="Acidentes que mais ocorrem por Estado - 2020")
+knitr::kable(freq.ocorrencia_tipo_21, digits=2, caption="Acidentes que mais ocorrem por Estado - 2021")
+```
+
+
+Extraindo a quantidade de acidentes por estado:
+
+```{r echo=TRUE, message=FALSE}
+dados_filtrados_uf_20 <- dados_20 %>%
+  select(ocorrencia_uf)
+ocorrencia_por_estado_20 <- dados_filtrados_uf_20 %>% 
+  count(ocorrencia_uf)
+
+knitr::kable(ocorrencia_por_estado_20, caption="Número de acidentes por estado - 2020")
+
+
+dados_filtrados_uf_21 <- dados_21 %>%
+  select(ocorrencia_uf)
+ocorrencia_por_estado_21 <- dados_filtrados_uf_21 %>% 
+  count(ocorrencia_uf)
+
+knitr::kable(ocorrencia_por_estado_21, caption="Número de acidentes por estado - 2021")
+```
+
+## Gráfico de barra para visualizar o número de acidentes por estado:
+
+```{r echo=TRUE, message=FALSE}
+ggplot(as.data.frame(ocorrencia_por_estado_20), aes(x=ocorrencia_uf, y=n, fill = ocorrencia_uf))+     
+  geom_col(position="dodge")+
+  labs(x="Estados", y="Número de acidentes - 2020")+
+  theme(axis.text.x = element_blank())
+
+
+ggplot(as.data.frame(ocorrencia_por_estado_21), aes(x=ocorrencia_uf, y=n, fill = ocorrencia_uf))+     
+  geom_col(position="dodge")+
+  labs(x="Estados", y="Número de acidentes - 2021")+
+  theme(axis.text.x = element_blank())
+```
+
+**Temos que, o estado de São Paulo teve a maior número de acidentes em 2020 e em 2022.**
+
+## Analisando os 6 estados com maior número de acidentes:
+
+```{r echo=TRUE, message=FALSE}
+maiores_ocorrencias <- ocorrencia_por_estado_20[order(ocorrencia_por_estado_20$n, decreasing=TRUE),]
+knitr::kable(head(maiores_ocorrencias), caption="Estados com maior número de acidentes - 2020")
+
+
+maiores_ocorrencias <- ocorrencia_por_estado_21[order(ocorrencia_por_estado_21$n, decreasing=TRUE),]
+knitr::kable(head(maiores_ocorrencias), caption="Estados com maior número de acidentes - 2021")
+```
+
+## Analisando os 6 estados com menor número de acidentes
+
+```{r echo=FALSE, message=FALSE}
+menores_ocorrencias <- ocorrencia_por_estado_20[order(ocorrencia_por_estado_20$n, decreasing=TRUE),]
+knitr::kable(tail(maiores_ocorrencias), caption="Estados com menor número de acidentes - 2020")
+
+menores_ocorrencias <- ocorrencia_por_estado_21[order(ocorrencia_por_estado_21$n, decreasing=TRUE),]
+knitr::kable(tail(maiores_ocorrencias), caption="Estados com menor número de acidentes - 2021")
+```
+
+
+# Conclusões:
+
+Por meio da análise, foi possível identificar que a diferença do número de acidentes entre o estado que acontece mais acidentes e o que acontece menos acidentes é muito significativa. No estado de São Paulo onde temos 267 acidentes e o estado de Sergipe onde temos 2 acidentes (somando os anos de 2020 e 2021). Pudemos também analisar qual o tipo de acidente que mais acontece no nosso país, e o resultado nos mostrou que PERDA DE CONTROLE NO SOLO é o que mais ocorre no ano de 2021, e FALHA DE MOTOR EM VOO é o que mais ocorreu no ano de 2021.
+
+Entre os estados que menos acontece acidentes temos: Paraíba, Alagoas, Amapá, Maranhão e Sergipe com 2, 1, 1, 1 e 1 acidente respectivamente. Com 1 acidente em um território não identificado, esses dados são referentes ao ano de 2020. E no ano de 2021, curiosamente, temos o mesmo padrão de dados.
+
+Entre os estados que mais acontece acidentes temos: São Paulo, Minas Gerais, Paraná, Mato Grosso, Rio de Janeiro e Pará com 130, 48, 44, 37, 36 e 25 acidentes respectivamente, no ano de 2020.
+
+Entre os estados que mais acontece acidentes no ano de 2021, temos: São Paulo, Minas Gerais, Mato Grosso, Paraná, Rio de Janeiro e Goiás com 137, 63, 40, 31, 30 e 29 acidentes respectivamente, no ano de 2020.
+
+Podemos perceber que os acidentes aéreos são mais frequentes na região sul do país. Essa discussão pode ser estendida com outros tipos de dados que seriam o número de voos que saem/chegam em cada estado, podendo ser posssível fazer uma análise mais profunda em relação a quantidade de acidentes versus a quantidade de voos. Mas podemos perceber também que temos o estado do Pará, no ano de 2020, compondo um dos estados que mais possuem acidentes aéreos; é importante lembrar do vírus COVID que se alastrou pelo Brasil e que na região norte obeteve-se um número elevado de casos onde o tráfego aéreo aumentou para socorrer vítimas.
+
+\newpage
+
+
+
+
+
+# Análise de teste de hipótese
+
+Nesse dado, a variável "**Número de Acidentes 2020**" é o número de acidentes que ocorre em território nacional no ano de 2020 e, "**Número de Acidentes 2021**" é o número de acidentes que ocorre em território nacional no ano de 2021.
+
+Assumindo que no estado de São Paulo é onde mais ocorre acidentes, então vamos verificar se a proporção de acidentes é de pelo menos 50% nessa amostra.
+
+h0: p = 0.5 (Hipótese nula).
+
+h1: p \< 0.5 (Hipótese alternativa).
+
+```{r echo=TRUE, message=FALSE}
+
+# Definindo os parâmetros do teste
+ocorrencia_uf <- "SP"
+probabilidade_de_sucesso <- 0.5
+
+# Lista contendo 1 para peso maior ou igual ao peso médio e 0 para menor.
+verifica_uf <- fre.ocorrencia_tipo <- dados_filtrados_20
+
+tabela_uf <- table(verifica_uf)
+tamanho_da_amostra <- dim(dados_filtrados_20)[1]
+total_sucessos <- tabela_uf[2]
+
+# Calculando o teste de hipótese unilateral à esquerda
+prop.test(
+  x = total_sucessos,
+  n = tamanho_da_amostra,
+  p = probabilidade_de_sucesso,
+  alternative = 'less',
+  correct = FALSE
+)
+
+```
+
+**Resultados**:
+
+-   Intervalo de confiança de 95%.
+
+-   A proporção de acidentes em São Paulo é menor que 50%.
+
+-   Valor p = 0.0003995365 = 0,4% (\< 5%)
+
+-   Rejeita a hipótese nula.
+
+
